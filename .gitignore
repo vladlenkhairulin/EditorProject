@@ -1,0 +1,32 @@
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+**/build/
+
+# Local machine configuration
+local.properties
+
+# Generated Android files
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Compiled application files
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Firebase
+google-services.json
