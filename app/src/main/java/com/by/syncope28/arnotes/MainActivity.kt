@@ -11,11 +11,13 @@ import androidx.compose.ui.Modifier
 import com.by.syncope28.arnotes.ui.theme.ARNotesTheme
 import androidx.compose.ui.Alignment
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +57,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(sceneName : String, onSceneNameChange: (String) -> Unit, onCreateScene: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally) {
             OutlinedTextField(
