@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">ARNotes</string>
+    <string name="scene_1">Сцена 1</string>
+    <string name="scene_name">Название сцены</string>
+    <string name="create_scene">Создать сцену</string>
+    <string name="scene_opened_via_link">Сцена открыта по ссылке</string>
+    <string name="link_invalid">Ссылка на сцену недействительна</string>
+    <string name="my_notes">Мои заметки</string>
+    <string name="scene_not_found">Сцена не найдена</string>
+    <string name="error_cannot_open">Ошибка: не удалось открыть сцену</string>
+    <string name="cannot_load_scene">Не удаётся загрузить сцену</string>
+    <string name="note_text">Текст заметки</string>
+    <string name="add_note">Добавить заметку</string>
+    <string name="delete">Удалить</string>
+    <string name="scene_saved">Сцена сохранена</string>
+    <string name="save_scene">Сохранить сцену</string>
+    <string name="share_scene">Поделиться сценой</string>
 </resources>
