@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,20 +17,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.by.syncope28.arnotes.ui.theme.ARNotesTheme
 import androidx.core.content.edit
+import com.by.syncope28.arnotes.ui.theme.AppSpacing
+import kotlinx.coroutines.delay
 
 class SceneActivity : ComponentActivity() {
     companion object {
@@ -43,6 +62,7 @@ class SceneActivity : ComponentActivity() {
     private var draft by mutableStateOf("")
     private var msg by mutableStateOf("")
     private var sceneExists by mutableStateOf(false)
+    private var isLoading by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,73 +125,229 @@ class SceneActivity : ComponentActivity() {
                 )
             }
     }
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun SceneScreen() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
-        ) {
-            Text(
-                text = if (sceneExists) sceneName else stringResource(R.string.error_cannot_open),
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(msg)
-            if (!sceneExists) {
-                Spacer(modifier = Modifier.height(20.dp))
-                Text(stringResource(R.string.cannot_load_scene))
-                return
+        LaunchedEffect(Unit) {
+            delay(700)
+            isLoading = false
+        }
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (sceneExists) sceneName else "",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                    },
+                    actions = {
+                        if (sceneExists && !isLoading) {
+                            IconButton(
+                                onClick = {
+                                    saveScene()
+                                    msg = getString(R.string.scene_saved)
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Save,
+                                    contentDescription = stringResource(R.string.save_scene),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    shareScene()
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = stringResource(R.string.share_scene),
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
             }
-            Spacer(modifier = Modifier.height(20.dp))
-            OutlinedTextField(
-                value = draft,
-                onValueChange = { draft = it },
-                label = { Text(stringResource(R.string.note_text)) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = {
-                if (draft.isNotBlank()) {
-                    notes.add(draft)
-                    draft = ""
-                }
-            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(AppSpacing.Large)
             ) {
-                Text(stringResource(R.string.add_note))
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                itemsIndexed(notes) { index, note ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = note, modifier = Modifier.weight(1f))
-                        TextButton(onClick = {
-                            notes.removeAt(index)
-                        })
-                        {
-                            Text(stringResource(R.string.delete))
+                when {
+                    isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                                Spacer(
+                                    modifier = Modifier.height(AppSpacing.Medium)
+                                )
+                                Text(
+                                    text = stringResource(R.string.loading_scene),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                    !sceneExists -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Error,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                                Spacer(
+                                    modifier = Modifier.height(AppSpacing.Medium)
+                                )
+                                Text(
+                                    text = stringResource(R.string.cannot_load_scene),
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Spacer(
+                                    modifier = Modifier.height(AppSpacing.Medium)
+                                )
+                                Button(
+                                    onClick = {
+                                        finish()
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.back))
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        OutlinedTextField(
+                            value = draft,
+                            onValueChange = {
+                                draft = it
+                            },
+                            label = {
+                                Text(stringResource(R.string.note_text))
+                            },
+                            shape = MaterialTheme.shapes.small,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(
+                            modifier = Modifier.height(AppSpacing.Small)
+                        )
+                        Button(
+                            onClick = {
+                                if (draft.isNotBlank()) {
+                                    notes.add(draft)
+                                    draft = ""
+                                }
+                            },
+                            shape = MaterialTheme.shapes.large
+                        ) {
+                            Text(stringResource(R.string.add_note))
+                        }
+                        if (notes.isEmpty()) {
+                            Spacer(
+                                modifier = Modifier.height(AppSpacing.Large)
+                            )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.no_notes),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(
+                                    modifier = Modifier.height(AppSpacing.Small)
+                                )
+                                Text(
+                                    text = stringResource(R.string.add_first_note),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+                        else {
+                            Spacer(
+                                modifier = Modifier.height(AppSpacing.Medium)
+                            )
+
+                            LazyColumn(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                itemsIndexed(notes) { index, note ->
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = AppSpacing.Small),
+                                        shape = MaterialTheme.shapes.medium,
+                                        color = MaterialTheme.colorScheme.surfaceContainer
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(AppSpacing.Medium),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = note,
+                                                modifier = Modifier.weight(1f),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    notes.removeAt(index)
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = stringResource(R.string.delete),
+                                                    tint = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-            Button(onClick = {
-                saveScene()
-                msg = getString(R.string.scene_saved)
-            }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.save_scene))
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { shareScene() }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.share_scene))
-            }
-
-
         }
     }
+
+
 
     private fun saveScene() {
         getSharedPreferences("scene_$curSceneId", MODE_PRIVATE)
