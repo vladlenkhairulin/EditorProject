@@ -12,6 +12,7 @@ import com.by.syncope28.arnotes.ui.theme.ARNotesTheme
 import androidx.compose.ui.Alignment
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,9 +22,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.by.syncope28.arnotes.ui.theme.AppSpacing
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
@@ -32,53 +35,153 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ARNotesTheme {
-                MainScreen(sceneName = sceneName, onSceneNameChange = {
-                    sceneName = it
-                }, onCreateScene = {
-                    if (sceneName != "") {
-                        val sceneId = UUID.randomUUID().toString()
-                        val intent = Intent(
-                            this, SceneActivity::class.java
-                        )
-                        intent.putExtra(
-                            "SCENE_NAME", sceneName
-                        )
-                        intent.putExtra(
-                            "SCENE_ID", sceneId
-                        )
-                        startActivity(intent)
-                    }
-                })
+            var selectedDarkTheme by rememberSaveable {
+                mutableStateOf<Boolean?>(null)
             }
-        }
-    }
-}
-
-@Composable
-fun MainScreen(sceneName : String, onSceneNameChange: (String) -> Unit, onCreateScene: () -> Unit) {
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally) {
-            OutlinedTextField(
-                value = sceneName,
-                onValueChange = {
-                    onSceneNameChange(it)
-                }, label = {
-                    Text(stringResource(R.string.scene_name))
-                }
-            )
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-            Button(
-                onClick = onCreateScene
+            var selectedDynamicColor by rememberSaveable {
+                mutableStateOf<Boolean?>(null)
+            }
+            val systemDarkTheme = isSystemInDarkTheme()
+            ARNotesTheme(
+                darkTheme = selectedDarkTheme ?: systemDarkTheme,
+                dynamicColor = selectedDynamicColor ?: false
             ) {
-                Text(stringResource(R.string.create_scene))
+                when {
+                    selectedDarkTheme == null -> {
+                        ThemeChoiceScreen(
+                            onThemeSelected = {
+                                selectedDarkTheme = it
+                            }
+                        )
+                    }
+
+                    selectedDynamicColor == null -> {
+                        ColorChoiceScreen(
+                            onColorSelected = {
+                                selectedDynamicColor = it
+                            }
+                        )
+                    }
+
+                    else -> {
+                        MainScreen(
+                            sceneName = sceneName,
+                            onSceneNameChange = {
+                                sceneName = it
+                            },
+                            onCreateScene = {
+                                if (sceneName != "") {
+                                    val sceneId = UUID.randomUUID().toString()
+                                    val intent = Intent(
+                                        this, SceneActivity::class.java
+                                    )
+                                    intent.putExtra("SCENE_NAME", sceneName)
+                                    intent.putExtra("SCENE_ID", sceneId)
+                                    intent.putExtra("DARK_THEME", selectedDarkTheme)
+                                    intent.putExtra("DYNAMIC_COLOR", selectedDynamicColor)
+                                    startActivity(intent)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }}
+
+        @Composable
+        fun ThemeChoiceScreen(onThemeSelected: (Boolean) -> Unit) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.choose_theme),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(modifier = Modifier.height(AppSpacing.Medium))
+                    Button(
+                        onClick = {
+                            onThemeSelected(false)
+                        }
+                    ) {
+                        Text(stringResource(R.string.light_theme))
+                    }
+                    Spacer(modifier = Modifier.height(AppSpacing.Small))
+                    Button(
+                        onClick = {
+                            onThemeSelected(true)
+                        }
+                    ) {
+                        Text(stringResource(R.string.dark_theme))
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun ColorChoiceScreen(onColorSelected: (Boolean) -> Unit) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.choose_colors),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                    Spacer(modifier = Modifier.height(AppSpacing.Medium))
+                    Button(onClick = {
+                        onColorSelected(false)
+                    }) {
+                        Text(stringResource(R.string.standard_colors))
+                    }
+                    Spacer(modifier = Modifier.height(AppSpacing.Small))
+                    Button(onClick = {
+                        onColorSelected(true)
+                    }) {
+                        Text(stringResource(R.string.dynamic_colors))
+                    }
+                }
+            }
+        }
+
+        @Composable
+        fun MainScreen(
+            sceneName: String,
+            onSceneNameChange: (String) -> Unit,
+            onCreateScene: () -> Unit
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    OutlinedTextField(
+                        value = sceneName,
+                        onValueChange = {
+                            onSceneNameChange(it)
+                        }, label = {
+                            Text(stringResource(R.string.scene_name))
+                        }
+                    )
+                    Spacer(
+                        modifier = Modifier.height(AppSpacing.Small)
+                    )
+                    Button(
+                        onClick = onCreateScene
+                    ) {
+                        Text(stringResource(R.string.create_scene))
+                    }
+                }
             }
         }
     }
-}

@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
@@ -32,7 +33,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -40,6 +40,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +50,14 @@ import com.by.syncope28.arnotes.ui.theme.ARNotesTheme
 import androidx.core.content.edit
 import com.by.syncope28.arnotes.ui.theme.AppSpacing
 import kotlinx.coroutines.delay
+
+sealed interface SceneState {
+    object Loading : SceneState
+    object Success : SceneState
+    data class Error(
+        val message: String
+    ) : SceneState
+}
 
 class SceneActivity : ComponentActivity() {
     companion object {
@@ -60,37 +70,43 @@ class SceneActivity : ComponentActivity() {
     private var curSceneId = ""
     private var sceneName by mutableStateOf("")
     private var draft by mutableStateOf("")
-    private var msg by mutableStateOf("")
-    private var sceneExists by mutableStateOf(false)
-    private var isLoading by mutableStateOf(true)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
-        openRequestedScene(intent)
-        if (sceneExists) {
+        val requestedSceneState = openRequestedScene(intent)
+        if (requestedSceneState == SceneState.Success) {
             val savedNotes = savedInstanceState?.getStringArrayList(NOTES)
-            if (savedNotes != null) notes.addAll(savedNotes) else loadScene()
+            if (savedNotes != null) {
+                notes.addAll(savedNotes)
+            } else {
+                loadScene()
+            }
             draft = savedInstanceState?.getString(DRAFT) ?: ""
         }
+        val darkTheme = intent.getBooleanExtra("DARK_THEME", false)
+        val dynamicColor = intent.getBooleanExtra("DYNAMIC_COLOR", false)
         setContent {
-            ARNotesTheme {
-                SceneScreen()
+            ARNotesTheme (
+                darkTheme = darkTheme,
+                dynamicColor = dynamicColor
+            ){
+                SceneScreen(requestedSceneState)
             }
         }
     }
 
-    private fun openRequestedScene(intent: Intent) {
+    private fun openRequestedScene(intent: Intent): SceneState {
         val link = intent.data
         if (link != null) {
             val sceneId = link.lastPathSegment
             if (sceneId != null && checkScene(sceneId)) {
                 curSceneId = sceneId
-                sceneExists = true
-                msg = getString(R.string.scene_opened_via_link)
+                return SceneState.Success
             } else {
-                sceneExists = false
-                msg = getString(R.string.link_invalid)
+                return SceneState.Error(
+                    getString(R.string.link_invalid)
+                )
             }
         } else {
             val sceneId = intent.getStringExtra("SCENE_ID")
@@ -98,12 +114,12 @@ class SceneActivity : ComponentActivity() {
             if (sceneId != null && name != null) {
                 curSceneId = sceneId
                 sceneName = name
-                sceneExists = true
                 saveSceneName()
-                msg = getString(R.string.my_notes)
+                return SceneState.Success
             } else {
-                sceneExists = false
-                msg = getString(R.string.scene_not_found)
+                return SceneState.Error(
+                    getString(R.string.scene_not_found)
+                )
             }
         }
     }
@@ -127,10 +143,16 @@ class SceneActivity : ComponentActivity() {
     }
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun SceneScreen() {
+    private fun SceneScreen(requestedSceneState: SceneState) {
+        var editingIndex by rememberSaveable {
+            mutableStateOf<Int?>(null)
+        }
+        var sceneState by remember {
+            mutableStateOf<SceneState>(SceneState.Loading)
+        }
         LaunchedEffect(Unit) {
             delay(700)
-            isLoading = false
+            sceneState = requestedSceneState
         }
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -138,23 +160,29 @@ class SceneActivity : ComponentActivity() {
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (sceneExists) sceneName else "",
+                            text = if (sceneState == SceneState.Success) sceneName else "",
                             style = MaterialTheme.typography.headlineSmall
                         )
                     },
                     actions = {
-                        if (sceneExists && !isLoading) {
-                            IconButton(
-                                onClick = {
-                                    saveScene()
-                                    msg = getString(R.string.scene_saved)
+                        if (sceneState == SceneState.Success) {
+                            if (editingIndex != null) {
+                                IconButton(
+                                    onClick = {
+                                        val index = editingIndex
+                                        if (index != null && draft.isNotBlank()) {
+                                            notes[index] = draft
+                                            draft = ""
+                                            editingIndex = null
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Save,
+                                        contentDescription = stringResource(R.string.save_note),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Save,
-                                    contentDescription = stringResource(R.string.save_scene),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
                             }
                             IconButton(
                                 onClick = {
@@ -182,8 +210,8 @@ class SceneActivity : ComponentActivity() {
                     .padding(innerPadding)
                     .padding(AppSpacing.Large)
             ) {
-                when {
-                    isLoading -> {
+                when (val state = sceneState) {
+                    SceneState.Loading -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -206,7 +234,7 @@ class SceneActivity : ComponentActivity() {
                             }
                         }
                     }
-                    !sceneExists -> {
+                    is SceneState.Error -> {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -225,7 +253,7 @@ class SceneActivity : ComponentActivity() {
                                     modifier = Modifier.height(AppSpacing.Medium)
                                 )
                                 Text(
-                                    text = stringResource(R.string.cannot_load_scene),
+                                    text = state.message,
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
@@ -242,7 +270,7 @@ class SceneActivity : ComponentActivity() {
                             }
                         }
                     }
-                    else -> {
+                    SceneState.Success -> {
                         OutlinedTextField(
                             value = draft,
                             onValueChange = {
@@ -263,16 +291,24 @@ class SceneActivity : ComponentActivity() {
                         Spacer(
                             modifier = Modifier.height(AppSpacing.Small)
                         )
-                        Button(
-                            onClick = {
-                                if (draft.isNotBlank()) {
-                                    notes.add(draft)
-                                    draft = ""
-                                }
-                            },
-                            shape = MaterialTheme.shapes.large
-                        ) {
-                            Text(stringResource(R.string.add_note))
+                        if (editingIndex == null) {
+                            Button(
+                                onClick = {
+                                    if (draft.isNotBlank()) {
+                                        notes.add(draft)
+                                        draft = ""
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .fillMaxWidth(0.7f),
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.add_note),
+                                    style = MaterialTheme.typography.headlineMedium
+                                )
+                            }
                         }
                         if (notes.isEmpty()) {
                             Spacer(
@@ -327,8 +363,21 @@ class SceneActivity : ComponentActivity() {
                                             )
                                             IconButton(
                                                 onClick = {
-                                                    notes.removeAt(index)
+                                                    draft = note
+                                                    editingIndex = index
                                                 }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Edit,
+                                                    contentDescription = stringResource(R.string.edit),
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    notes.removeAt(index)
+                                                },
+                                                enabled = editingIndex == null
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.Delete,
@@ -388,7 +437,7 @@ class SceneActivity : ComponentActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        if (sceneExists) {
+        if (curSceneId.isNotEmpty()) {
             outState.putStringArrayList(NOTES, ArrayList(notes))
             outState.putString(DRAFT, draft)
         }
@@ -413,7 +462,7 @@ class SceneActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (sceneExists) saveScene()
+        if (curSceneId.isNotEmpty()) saveScene()
         Log.d(TAG, "onStop")
     }
 
