@@ -49,7 +49,7 @@ import com.by.syncope28.arnotes.ui.theme.AppSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SceneScreen(
+fun SceneScreen(
     state : SceneUiState,
     onDraftChange : (String) -> Unit,
     onAdd : () -> Unit,

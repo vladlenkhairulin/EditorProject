@@ -10,21 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class SceneUiState(
-    val sceneName: String = "",
-    val draft: String = "",
-    val editingIndex: Int? = null,
-    val result: SceneResult = SceneResult.Loading,
-    val userMessage: Int? = null
-)
-
-sealed interface SceneResult {
-    object Loading : SceneResult
-    data class Content(val notes: List<String>) : SceneResult
-    object Empty : SceneResult
-    data class Error(val message: String) : SceneResult
-}
-
 class SceneViewModel(
     private val savedStateHandle : SavedStateHandle
 ) : ViewModel() {
@@ -146,4 +131,3 @@ class SceneViewModel(
     }
 
 }
-
