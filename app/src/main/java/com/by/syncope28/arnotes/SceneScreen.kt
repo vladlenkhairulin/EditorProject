@@ -78,7 +78,7 @@ internal fun SceneScreen(
     }
 
     val showAddButton = state.editingIndex == null &&
-            (state.result is SceneResult.Content || state.result == SceneResult.Empty)
+        (state.result is SceneResult.Content || state.result == SceneResult.Empty)
     Scaffold(
         modifier = Modifier.imePadding(),
         floatingActionButton = {

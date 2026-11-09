@@ -88,101 +88,101 @@ class MainActivity : ComponentActivity() {
             }
         }}
 
-        @Composable
-        fun ThemeChoiceScreen(onThemeSelected: (Boolean) -> Unit) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.choose_theme),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(AppSpacing.Medium))
-                    Button(
-                        onClick = {
-                            onThemeSelected(false)
-                        }
-                    ) {
-                        Text(stringResource(R.string.light_theme))
-                    }
-                    Spacer(modifier = Modifier.height(AppSpacing.Small))
-                    Button(
-                        onClick = {
-                            onThemeSelected(true)
-                        }
-                    ) {
-                        Text(stringResource(R.string.dark_theme))
-                    }
-                }
-            }
-        }
-
-        @Composable
-        fun ColorChoiceScreen(onColorSelected: (Boolean) -> Unit) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.choose_colors),
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Spacer(modifier = Modifier.height(AppSpacing.Medium))
-                    Button(onClick = {
-                        onColorSelected(false)
-                    }) {
-                        Text(stringResource(R.string.standard_colors))
-                    }
-                    Spacer(modifier = Modifier.height(AppSpacing.Small))
-                    Button(onClick = {
-                        onColorSelected(true)
-                    }) {
-                        Text(stringResource(R.string.dynamic_colors))
-                    }
-                }
-            }
-        }
-
-        @Composable
-        fun MainScreen(
-            sceneName: String,
-            onSceneNameChange: (String) -> Unit,
-            onCreateScene: () -> Unit
+    @Composable
+    fun ThemeChoiceScreen(onThemeSelected: (Boolean) -> Unit) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    OutlinedTextField(
-                        value = sceneName,
-                        onValueChange = {
-                            onSceneNameChange(it)
-                        }, label = {
-                            Text(stringResource(R.string.scene_name))
-                        }
-                    )
-                    Spacer(
-                        modifier = Modifier.height(AppSpacing.Small)
-                    )
-                    Button(
-                        onClick = onCreateScene
-                    ) {
-                        Text(stringResource(R.string.create_scene))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.choose_theme),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(AppSpacing.Medium))
+                Button(
+                    onClick = {
+                        onThemeSelected(false)
                     }
+                ) {
+                    Text(stringResource(R.string.light_theme))
+                }
+                Spacer(modifier = Modifier.height(AppSpacing.Small))
+                Button(
+                    onClick = {
+                        onThemeSelected(true)
+                    }
+                ) {
+                    Text(stringResource(R.string.dark_theme))
                 }
             }
         }
     }
+
+    @Composable
+    fun ColorChoiceScreen(onColorSelected: (Boolean) -> Unit) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = stringResource(R.string.choose_colors),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(modifier = Modifier.height(AppSpacing.Medium))
+                Button(onClick = {
+                    onColorSelected(false)
+                }) {
+                    Text(stringResource(R.string.standard_colors))
+                }
+                Spacer(modifier = Modifier.height(AppSpacing.Small))
+                Button(onClick = {
+                    onColorSelected(true)
+                }) {
+                    Text(stringResource(R.string.dynamic_colors))
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun MainScreen(
+        sceneName: String,
+        onSceneNameChange: (String) -> Unit,
+        onCreateScene: () -> Unit
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OutlinedTextField(
+                    value = sceneName,
+                    onValueChange = {
+                        onSceneNameChange(it)
+                    }, label = {
+                        Text(stringResource(R.string.scene_name))
+                    }
+                )
+                Spacer(
+                    modifier = Modifier.height(AppSpacing.Small)
+                )
+                Button(
+                    onClick = onCreateScene
+                ) {
+                    Text(stringResource(R.string.create_scene))
+                }
+            }
+        }
+    }
+}

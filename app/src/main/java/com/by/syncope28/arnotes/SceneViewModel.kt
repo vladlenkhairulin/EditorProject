@@ -38,8 +38,8 @@ class SceneViewModel(
     )
     val uiState : StateFlow<SceneUiState> = _uiState.asStateFlow()
     fun loadScene(sceneName : String,
-                  notes : List<String>,
-                  errorMessage : String? = null
+        notes : List<String>,
+        errorMessage : String? = null
     ){
         if (_uiState.value.result != SceneResult.Loading) {
             return
@@ -139,9 +139,9 @@ class SceneViewModel(
     }
     fun messageShown() {
         _uiState.update {
-                it.copy (
-                    userMessage = null
-                )
+            it.copy (
+                userMessage = null
+            )
         }
     }
 
