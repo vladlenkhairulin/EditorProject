@@ -33,13 +33,9 @@ class SceneActivity : ComponentActivity() {
         Log.d(TAG, LOG_ON_CREATE)
         val requestedSceneState = openRequestedScene(intent)
         if (requestedSceneState == SceneState.Success) {
-            val savedNotes = savedInstanceState?.getStringArrayList(SceneKeys.PREF_NOTES)
-            if (savedNotes != null) {
-                notes.addAll(savedNotes)
-            } else {
                 loadScene()
-            }
         }
+
 
         val errorMessage = if (requestedSceneState is SceneState.Error) {
             requestedSceneState.message
