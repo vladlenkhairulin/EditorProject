@@ -9,17 +9,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -29,18 +26,12 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,36 +42,14 @@ import com.by.syncope28.arnotes.ui.theme.AppSpacing
 @Composable
 fun SceneScreen(
     state : SceneUiState,
-    onDraftChange : (String) -> Unit,
     onAdd : () -> Unit,
-    onEdit : (Int) -> Unit,
-    onSave : () -> Unit,
-    onDelete : (Int) -> Unit,
-    onMessageShown : () -> Unit,
+    onOpenNote : (String) -> Unit,
+    onDelete : (String) -> Unit,
     onShare : () -> Unit,
     onBack : () -> Unit
 ) {
-    val snackbarHostState = remember {
-        SnackbarHostState()
-    }
-    val messageId = state.userMessage
-
-    val message = if (messageId != null) {
-        stringResource(messageId)
-    } else {
-        null
-    }
-    LaunchedEffect(state.userMessage) {
-        if (message != null) {
-            snackbarHostState.showSnackbar(message)
-            onMessageShown()
-        }
-    }
-
-    val showAddButton = state.editingIndex == null &&
-        (state.result is SceneResult.Content || state.result == SceneResult.Empty)
+    val showAddButton = state.result is SceneResult.Content || state.result == SceneResult.Empty
     Scaffold(
-        modifier = Modifier.imePadding(),
         floatingActionButton = {
             if (showAddButton) {
                 FloatingActionButton(
@@ -97,9 +66,6 @@ fun SceneScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.End,
-        snackbarHost = {
-            SnackbarHost(snackbarHostState)
-        },
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
@@ -111,19 +77,6 @@ fun SceneScreen(
                 },
                 actions = {
                     if (state.result is SceneResult.Content || state.result == SceneResult.Empty) {
-                        if (state.editingIndex != null) {
-                            IconButton(
-                                onClick = {
-                                    onSave()
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Save,
-                                    contentDescription = stringResource(R.string.save_note),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
                         IconButton(
                             onClick = {
                                 onShare()
@@ -216,26 +169,6 @@ fun SceneScreen(
                     } else {
                         emptyList()
                     }
-                    OutlinedTextField(
-                        value = state.draft,
-                        onValueChange = {
-                            onDraftChange(it)
-                        },
-                        label = {
-                            Text(stringResource(R.string.note_text))
-                        },
-                        shape = MaterialTheme.shapes.small,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(
-                        modifier = Modifier.height(AppSpacing.Small)
-                    )
                     if (notes.isEmpty()) {
                         Spacer(
                             modifier = Modifier.height(AppSpacing.Large)
@@ -270,8 +203,11 @@ fun SceneScreen(
                                 bottom = if (showAddButton) 80.dp else 0.dp
                             )
                         ) {
-                            itemsIndexed(notes) { index, note ->
+                            items(notes, key = { note -> note.id }) { note ->
                                 Surface(
+                                    onClick = {
+                                        onOpenNote(note.id)
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(bottom = AppSpacing.Small),
@@ -285,27 +221,15 @@ fun SceneScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = note,
+                                            text = note.text,
                                             modifier = Modifier.weight(1f),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         IconButton(
                                             onClick = {
-                                                onEdit(index)
+                                                onDelete(note.id)
                                             }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Edit,
-                                                contentDescription = stringResource(R.string.edit),
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                onDelete(index)
-                                            },
-                                            enabled = state.editingIndex == null
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,

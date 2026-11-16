@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.core.content.edit
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val appearance = getSharedPreferences(SceneKeys.PREF_APPEARANCE, MODE_PRIVATE)
         setContent {
             var selectedDarkTheme by rememberSaveable {
                 mutableStateOf<Boolean?>(null)
@@ -26,9 +28,11 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<Boolean?>(null)
             }
             val systemDarkTheme = isSystemInDarkTheme()
+            val darkTheme = selectedDarkTheme ?: systemDarkTheme
+            val dynamicColor = selectedDynamicColor ?: false
             ARNotesTheme(
-                darkTheme = selectedDarkTheme ?: systemDarkTheme,
-                dynamicColor = selectedDynamicColor ?: false
+                darkTheme = darkTheme,
+                dynamicColor = dynamicColor
             ) {
                 when {
                     selectedDarkTheme == null -> {
@@ -43,6 +47,10 @@ class MainActivity : ComponentActivity() {
                         ColorChoiceScreen(
                             onColorSelected = {
                                 selectedDynamicColor = it
+                                appearance.edit {
+                                    putBoolean(SceneKeys.PREF_DARK_THEME, darkTheme)
+                                    putBoolean(SceneKeys.PREF_DYNAMIC_COLOR, it)
+                                }
                             }
                         )
                     }
@@ -61,8 +69,8 @@ class MainActivity : ComponentActivity() {
                                     )
                                     intent.putExtra(SceneKeys.EXTRA_SCENE_NAME, sceneName)
                                     intent.putExtra(SceneKeys.EXTRA_SCENE_ID, sceneId)
-                                    intent.putExtra(SceneKeys.EXTRA_DARK_THEME, selectedDarkTheme)
-                                    intent.putExtra(SceneKeys.EXTRA_DYNAMIC_COLOR, selectedDynamicColor)
+                                    intent.putExtra(SceneKeys.EXTRA_DARK_THEME, darkTheme)
+                                    intent.putExtra(SceneKeys.EXTRA_DYNAMIC_COLOR, dynamicColor)
                                     startActivity(intent)
                                 }
                             }

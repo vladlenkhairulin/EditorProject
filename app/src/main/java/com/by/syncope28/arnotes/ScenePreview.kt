@@ -15,17 +15,14 @@ private fun SceneContentPreview() {
                 sceneName = "Моя сцена",
                 result = SceneResult.Content(
                     listOf(
-                        "Первая заметка",
-                        "Вторая заметка"
+                        Note("1", "Первая заметка"),
+                        Note("2", "Вторая заметка")
                     )
                 )
             ),
-            onDraftChange = {},
             onAdd = {},
-            onEdit = {},
-            onSave = {},
+            onOpenNote = {},
             onDelete = {},
-            onMessageShown = {},
             onShare = {},
             onBack = {}
         )
@@ -43,12 +40,9 @@ private fun SceneEmptyPreview() {
                 sceneName = "Пустая сцена",
                 result = SceneResult.Empty
             ),
-            onDraftChange = {},
             onAdd = {},
-            onEdit = {},
-            onSave = {},
+            onOpenNote = {},
             onDelete = {},
-            onMessageShown = {},
             onShare = {},
             onBack = {}
         )
@@ -67,12 +61,9 @@ private fun SceneErrorPreview() {
                     "Сцена не найдена"
                 )
             ),
-            onDraftChange = {},
             onAdd = {},
-            onEdit = {},
-            onSave = {},
+            onOpenNote = {},
             onDelete = {},
-            onMessageShown = {},
             onShare = {},
             onBack = {}
         )

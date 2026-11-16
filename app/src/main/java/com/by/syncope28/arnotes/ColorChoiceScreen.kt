@@ -26,7 +26,8 @@ fun ColorChoiceScreen(onColorSelected: (Boolean) -> Unit) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = stringResource(R.string.choose_colors),
-                style = MaterialTheme.typography.headlineSmall
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(AppSpacing.Medium))
             Button(onClick = {

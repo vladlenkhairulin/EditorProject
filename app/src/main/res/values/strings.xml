@@ -13,10 +13,27 @@
     <string name="add_note">Добавить заметку</string>
     <string name="delete">Удалить</string>
     <string name="scene_saved">Сцена сохранена</string>
-    <string name="save_scene">Сохранить сцену</string>
     <string name="share_scene">Поделиться сценой</string>
+    <string name="share_note">Поделиться ссылкой на заметку</string>
     <string name="loading_scene">Загрузка сцены</string>
     <string name="no_notes">Заметок нет :(</string>
     <string name="add_first_note">ДОБАВЬТЕ ПЕРВУЮ ЗАМЕТКУ</string>
     <string name="back">Назад</string>
+
+    <string name="choose_theme">Выберите тему</string>
+    <string name="light_theme">Светлая</string>
+    <string name="dark_theme">Тёмная</string>
+    <string name="choose_colors">Выберите цветовую схему</string>
+    <string name="standard_colors">Обычные цвета</string>
+    <string name="dynamic_colors">Динамические цвета системы</string>
+    <string name="edit">Редактировать</string>
+    <string name="save_note">Сохранить изменения</string>
+
+    <string name="note_added">Заметка добавлена</string>
+    <string name="note_changed">Заметка изменена</string>
+    <string name="note_deleted">Заметка удалена</string>
+
+    <string name="note_detail">Заметка</string>
+    <string name="edit_note">Редактирование заметки</string>
+    <string name="note_not_found">Заметка не найдена</string>
 </resources>

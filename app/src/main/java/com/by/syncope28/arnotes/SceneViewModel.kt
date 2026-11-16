@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class SceneViewModel(
     private val savedStateHandle : SavedStateHandle
@@ -18,12 +19,12 @@ class SceneViewModel(
     }
     private val _uiState = MutableStateFlow(
         SceneUiState(
-            draft  = savedStateHandle[DRAFT_KEY] ?: ""
+            draft = savedStateHandle[DRAFT_KEY] ?: ""
         )
     )
     val uiState : StateFlow<SceneUiState> = _uiState.asStateFlow()
     fun loadScene(sceneName : String,
-        notes : List<String>,
+        notes : List<Note>,
         errorMessage : String? = null
     ){
         if (_uiState.value.result != SceneResult.Loading) {
@@ -46,14 +47,14 @@ class SceneViewModel(
         }
     }
 
-    fun changeDraft(value : String) {
+    fun changeDraft(value: String) {
         savedStateHandle[DRAFT_KEY] = value
-        _uiState.update{
+        _uiState.update {
             it.copy(draft = value)
         }
     }
 
-    fun currentNotes() : List<String> {
+    fun currentNotes() : List<Note> {
         val result = _uiState.value.result
         return when (result) {
             is SceneResult.Content -> result.notes
@@ -62,55 +63,43 @@ class SceneViewModel(
     }
 
     fun addNote() {
-        val state = _uiState.value
-        if (state.draft.isBlank()) {
+        val draft = _uiState.value.draft
+        if (draft.isBlank()) {
             return
         }
-        val notes = currentNotes() + state.draft
-        savedStateHandle[DRAFT_KEY] = ""
+        val note = Note(UUID.randomUUID().toString(), draft)
+        val notes = currentNotes() + note
         _uiState.update {
             it.copy (
-                draft = "",
                 result = SceneResult.Content(notes),
                 userMessage = R.string.note_added
             )
         }
     }
-    fun editNote(index : Int) {
-        val notes = currentNotes()
-        if (index !in notes.indices) {
-            return
-        }
-        val text = notes[index]
-        savedStateHandle[DRAFT_KEY] = text
-        _uiState.update {
-            it.copy (
-                draft = text,
-                editingIndex = index
-            )
-        }
-    }
-    fun saveNote() {
-        val state = _uiState.value
-        val index = state.editingIndex
-        if (index == null || state.draft.isBlank()) {
+    fun saveNote(noteId: String) {
+        val draft = _uiState.value.draft
+        if (draft.isBlank()) {
             return
         }
         val notes = currentNotes().toMutableList()
-        notes[index] = state.draft
-        savedStateHandle[DRAFT_KEY] = ""
+        val index = notes.indexOfFirst { it.id == noteId }
+        if (index == -1) {
+            return
+        }
+        notes[index] = notes[index].copy(text = draft)
         _uiState.update {
             it.copy (
-                draft = "",
-                editingIndex = null,
                 result = SceneResult.Content(notes),
                 userMessage = R.string.note_changed
             )
         }
     }
-    fun deleteNote(index: Int) {
-        val notes = currentNotes().toMutableList()
-        notes.removeAt(index)
+    fun deleteNote(noteId: String) {
+        val current = currentNotes()
+        val notes = current.filterNot { it.id == noteId }
+        if (notes.size == current.size) {
+            return
+        }
         _uiState.update {
             it.copy (
                 result = if (notes.isEmpty()) {
