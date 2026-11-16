@@ -21,7 +21,8 @@
         android:theme="@style/Theme.ARNotes">
         <activity
             android:name = ".SceneActivity"
-            android:exported = "true" >
+            android:exported = "true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action
                     android:name = "android.intent.action.VIEW" />
