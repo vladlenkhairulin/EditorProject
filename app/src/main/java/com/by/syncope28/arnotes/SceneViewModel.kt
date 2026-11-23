@@ -14,12 +14,9 @@ import java.util.UUID
 class SceneViewModel(
     private val savedStateHandle : SavedStateHandle
 ) : ViewModel() {
-    companion object {
-        const val DRAFT_KEY = "draft"
-    }
     private val _uiState = MutableStateFlow(
         SceneUiState(
-            draft = savedStateHandle[DRAFT_KEY] ?: ""
+            draft = savedStateHandle[SceneKeys.DRAFT_KEY] ?: ""
         )
     )
     val uiState : StateFlow<SceneUiState> = _uiState.asStateFlow()
@@ -48,7 +45,7 @@ class SceneViewModel(
     }
 
     fun changeDraft(value: String) {
-        savedStateHandle[DRAFT_KEY] = value
+        savedStateHandle[SceneKeys.DRAFT_KEY] = value
         _uiState.update {
             it.copy(draft = value)
         }

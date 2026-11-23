@@ -8,10 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.deeplink.DeepLinkRequest
 import androidx.navigation3.runtime.deeplink.DeepLinkUri
 import androidx.navigation3.runtime.deeplink.UriDeepLinkMatcher
@@ -22,15 +24,7 @@ import kotlinx.serialization.serializer
 
 class SceneActivity : ComponentActivity() {
     private val sceneViewModel: SceneViewModel by viewModels()
-    companion object {
-        const val TAG = "ARNotes"
-        private const val LOG_ON_CREATE = "onCreate"
-        private const val LOG_ON_START = "onStart"
-        private const val LOG_ON_RESUME = "onResume"
-        private const val LOG_ON_PAUSE = "onPause"
-        private const val LOG_ON_STOP = "onStop"
-        private const val LOG_ON_DESTROY = "onDestroy"
-    }
+    private val appViewModel: AppViewModel by viewModels()
 
     private val noteLinkMatcher = UriDeepLinkMatcher(
         DeepLinkUri(SceneKeys.NOTE_LINK_PATTERN),
@@ -45,14 +39,19 @@ class SceneActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(TAG, LOG_ON_CREATE)
-        val noteLink = intent.data?.takeIf { intent.action == Intent.ACTION_VIEW }?.let { link ->
-            noteLinkMatcher.match(DeepLinkRequest(uri = DeepLinkUri(link.toString())))
+        appViewModel.loadSettings(this)
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_CREATE)
+        val link = intent.data
+        val noteLink = if (intent.action == Intent.ACTION_VIEW && link != null) {
+            val request = DeepLinkRequest(uri = DeepLinkUri(link.toString()))
+            noteLinkMatcher.match(request)
+        } else {
+            null
         }
         val requestedSceneState = try {
             openRequestedScene(intent, noteLink?.key?.sceneId)
         } catch (error: Exception) {
-            Log.e(TAG, "openRequestedScene", error)
+            Log.e(SceneKeys.LOG_TAG, SceneKeys.LOG_OPEN_REQUESTED_SCENE, error)
             SceneState.Error(getString(R.string.cannot_load_scene))
         }
         val errorMessage = when (requestedSceneState) {
@@ -61,7 +60,7 @@ class SceneActivity : ComponentActivity() {
                     loadScene()
                     null
                 } catch (error: Exception) {
-                    Log.e(TAG, "loadScene", error)
+                    Log.e(SceneKeys.LOG_TAG, SceneKeys.LOG_LOAD_SCENE, error)
                     getString(R.string.cannot_load_scene)
                 }
             }
@@ -79,33 +78,38 @@ class SceneActivity : ComponentActivity() {
             errorMessage = errorMessage
         )
 
-        val appearance = getSharedPreferences(SceneKeys.PREF_APPEARANCE, MODE_PRIVATE)
         setContent {
-            val darkTheme = intent.getBooleanExtra(
-                SceneKeys.EXTRA_DARK_THEME,
-                appearance.getBoolean(SceneKeys.PREF_DARK_THEME, isSystemInDarkTheme())
-            )
-            val dynamicColor = intent.getBooleanExtra(
-                SceneKeys.EXTRA_DYNAMIC_COLOR,
-                appearance.getBoolean(SceneKeys.PREF_DYNAMIC_COLOR, false)
-            )
+            val appState by appViewModel.uiState.collectAsStateWithLifecycle()
+            val systemDarkTheme = isSystemInDarkTheme()
+            LaunchedEffect(systemDarkTheme) {
+                appViewModel.refreshSettings(systemDarkTheme)
+            }
+            val darkTheme = appState.darkTheme ?: systemDarkTheme
+            val dynamicColor = appState.dynamicColor
             ARNotesTheme (
                 darkTheme = darkTheme,
                 dynamicColor = dynamicColor
             ){
-                SceneScreenContainer(
-                    viewModel = sceneViewModel,
-                    initialBackStack = initialBackStack,
-                    onShare = {
-                        shareScene()
-                    },
-                    onShareNote = { noteId ->
-                        shareNote(noteId)
-                    },
-                    onBack = {
-                        finish()
+                AppScreenContainer(
+                    viewModel = appViewModel,
+                    onShareProfile = { link ->
+                        shareLink(link, getString(R.string.share_profile))
                     }
-                )
+                ) {
+                    SceneScreenContainer(
+                        viewModel = sceneViewModel,
+                        initialBackStack = initialBackStack,
+                        onShare = {
+                            shareScene()
+                        },
+                        onShareNote = { noteId ->
+                            shareNote(noteId)
+                        },
+                        onBack = {
+                            finish()
+                        }
+                    )
+                }
             }
         }
     }
@@ -114,8 +118,8 @@ class SceneActivity : ComponentActivity() {
         val link = intent.data
         if (link != null) {
             val sceneId = linkedSceneId ?: link.pathSegments.takeIf {
-                link.scheme == "https" && link.host == "arnotes.com" &&
-                    it.size == 2 && it[0] == "scene"
+                link.scheme == SceneKeys.LINK_SCHEME && link.host == SceneKeys.LINK_HOST &&
+                    it.size == 2 && it[0] == SceneKeys.SCENE
             }?.get(1)
             if (sceneId != null && checkScene(sceneId)) {
                 curSceneId = sceneId
@@ -166,7 +170,7 @@ class SceneActivity : ComponentActivity() {
             return
         }
         saveNotes(sceneViewModel.currentNotes())
-        Log.d(TAG, getString(R.string.scene_saved))
+        Log.d(SceneKeys.LOG_TAG, getString(R.string.scene_saved))
     }
 
     private fun saveNotes(notes: List<Note>) {
@@ -221,7 +225,7 @@ class SceneActivity : ComponentActivity() {
     private fun shareNote(noteId: String) {
         saveScene()
         val sceneId = Uri.encode(curSceneId)
-        val link = "${SceneKeys.SCENE_LINK_PREFIX}$sceneId/note/${Uri.encode(noteId)}"
+        val link = "${SceneKeys.SCENE_LINK_PREFIX}$sceneId/${SceneKeys.NOTE}/${Uri.encode(noteId)}"
         shareLink(link)
     }
 
@@ -239,27 +243,28 @@ class SceneActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        Log.d(TAG, LOG_ON_START)
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_START)
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, LOG_ON_RESUME)
+        appViewModel.refreshSettings()
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_RESUME)
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, LOG_ON_PAUSE)
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_PAUSE)
     }
 
     override fun onStop() {
         super.onStop()
         if (curSceneId.isNotEmpty()) saveScene()
-        Log.d(TAG, LOG_ON_STOP)
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_STOP)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, LOG_ON_DESTROY)
+        Log.d(SceneKeys.LOG_TAG, SceneKeys.LOG_ON_DESTROY)
     }
 }

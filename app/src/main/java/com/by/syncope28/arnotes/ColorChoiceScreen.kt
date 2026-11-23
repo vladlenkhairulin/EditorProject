@@ -1,5 +1,6 @@
 package com.by.syncope28.arnotes
 
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +37,10 @@ fun ColorChoiceScreen(onColorSelected: (Boolean) -> Unit) {
                 Text(stringResource(R.string.standard_colors))
             }
             Spacer(modifier = Modifier.height(AppSpacing.Small))
-            Button(onClick = {
-                onColorSelected(true)
-            }) {
+            Button(
+                onClick = { onColorSelected(true) },
+                enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            ) {
                 Text(stringResource(R.string.dynamic_colors))
             }
         }

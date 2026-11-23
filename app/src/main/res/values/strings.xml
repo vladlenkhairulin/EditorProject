@@ -20,7 +20,6 @@
     <string name="add_first_note">ДОБАВЬТЕ ПЕРВУЮ ЗАМЕТКУ</string>
     <string name="back">Назад</string>
 
-    <string name="choose_theme">Выберите тему</string>
     <string name="light_theme">Светлая</string>
     <string name="dark_theme">Тёмная</string>
     <string name="choose_colors">Выберите цветовую схему</string>
@@ -36,4 +35,11 @@
     <string name="note_detail">Заметка</string>
     <string name="edit_note">Редактирование заметки</string>
     <string name="note_not_found">Заметка не найдена</string>
+    <string name="settings">Настройки</string>
+    <string name="user_profile">Профиль</string>
+    <string name="nickname">Никнейм</string>
+    <string name="save_profile">Сохранить</string>
+    <string name="share_profile">Поделиться профилем</string>
+    <string name="profile_saved">Профиль сохранён</string>
+    <string name="profile_link_error">Ссылка на профиль недействительна</string>
 </resources>
